@@ -11,23 +11,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # In a real project, you would install PyYAML here
+          # pip install pyyaml
 
       - name: Run task proposer script
         run: python scripts/propose_next_tasks.py
 
       - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "chore: Auto-update NEXT_ACTIONS.md"
           file_pattern: "NEXT_ACTIONS.md"

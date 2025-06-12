@@ -9,6 +9,10 @@ on:
 jobs:
   update-report:
     runs-on: ubuntu-latest
+    # Add this permissions block to grant write access
+    permissions:
+      contents: write
+      
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
