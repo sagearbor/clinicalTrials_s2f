@@ -5,8 +5,13 @@
 
 The following tasks are available to be worked on in parallel. Their dependencies have been met.
 
-- **Task ID:** `1.1`
-  - **Name:** Protocol Synopsis Generation Agent
+- **Task ID:** `1.2`
+  - **Name:** Patient Population Analysis Agent
   - **Status:** 0%
   - **Priority:** CRITICAL PATH
+
+- **Task ID:** `1.4`
+  - **Name:** Full Protocol Generation Agent
+  - **Status:** 0%
+  - **Priority:** Standard Task
 
