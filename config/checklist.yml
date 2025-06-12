@@ -1,0 +1,92 @@
+# This file serves as the single source of truth for all tasks in the project.
+# It is read by the human team and parsed by the Python orchestrator scripts.
+
+# - agentId: A unique identifier for the task.
+# - name: A human-readable name.
+# - status: The completion percentage (0-100).
+# - dependencies: A list of agentIds that must have a status of 100 before this task can start. An empty list [] means no dependencies.
+# - critical_path: (true/false) Indicates if this task is on the MVP critical path.
+
+- agentId: 1.100
+  name: Protocol Synopsis Generation Agent
+  status: 0
+  dependencies: []
+  critical_path: true
+
+- agentId: 1.200
+  name: Patient Population Analysis Agent
+  status: 0
+  dependencies: [1.100]
+  critical_path: true
+
+- agentId: 1.300
+  name: Site Performance Evaluation Agent
+  status: 0
+  dependencies: [1.200]
+  critical_path: true
+
+- agentId: 1.400
+  name: Full Protocol Generation Agent
+  status: 0
+  dependencies: [1.100]
+  critical_path: false
+
+- agentId: 2.100
+  name: Essential Document Collection Agent
+  status: 0
+  dependencies: [1.300]
+  critical_path: true
+
+- agentId: 2.200
+  name: Patient Recruitment Material Generator
+  status: 0
+  dependencies: [1.200]
+  critical_path: false
+
+- agentId: 2.300
+  name: Patient Pre-Screening & Engagement Agent
+  status: 0
+  dependencies: [2.100]
+  critical_path: true
+
+- agentId: 3.100
+  name: Real-time Data Validation Agent
+  status: 0
+  dependencies: [2.300]
+  critical_path: true
+
+- agentId: 3.200
+  name: Medical Coding Agent
+  status: 0
+  dependencies: [3.100]
+  critical_path: false
+
+- agentId: 3.300
+  name: Pharmacovigilance & AE Alerting Agent
+  status: 0
+  dependencies: [3.100]
+  critical_path: true
+
+- agentId: 3.400
+  name: Site Monitoring Prioritization Agent
+  status: 0
+  dependencies: [3.100]
+  critical_path: false
+
+- agentId: 4.100
+  name: Database Lock Readiness Agent
+  status: 0
+  dependencies: [3.100, 3.300]
+  critical_path: true
+
+- agentId: 4.200
+  name: Statistical Analysis Plan (SAP) to Code Agent
+  status: 0
+  dependencies: [4.100]
+  critical_path: false
+
+- agentId: 4.300
+  name: Clinical Study Report (CSR) Generation Agent
+  status: 0
+  dependencies: [4.100, 4.200]
+  critical_path: true
