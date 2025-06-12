@@ -1,3 +1,12 @@
-Next Available Actions This report is auto-generated. Do not edit directly. Run the "Propose Next Actions" action to regenerate.
+## Next Available Actions
 
-(Not yet generated. Run the "Propose Next Actions" workflow to see the first set of tasks.)
+*This report is auto-generated. Do not edit directly.*
+*Run the 'Propose Next Actions' workflow to regenerate.*
+
+The following tasks are available to be worked on in parallel. Their dependencies have been met.
+
+- **Task ID:** `1.1`
+  - **Name:** Protocol Synopsis Generation Agent
+  - **Status:** 0%
+  - **Priority:** CRITICAL PATH
+
