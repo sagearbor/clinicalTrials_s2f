@@ -1,0 +1,39 @@
+# This GitHub Action automates updating the PROGRESS.md report.
+
+name: Update Progress Report
+
+# Allows you to run this workflow manually from the Actions tab
+on:
+  workflow_dispatch:
+
+jobs:
+  update-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # In a real project, you would install PyYAML here
+          # pip install pyyaml
+
+      - name: Run progress update script
+        id: run_script
+        run: python scripts/update_progress.py
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "docs: Auto-update PROGRESS.md report"
+          file_pattern: "PROGRESS.md PROGRESS_LOGS/processed/*"
+          commit_user_name: "GitHub Actions Bot"
+          commit_user_email: "actions@github.com"
+          commit_author: "GitHub Actions Bot <actions@github.com>"
+
