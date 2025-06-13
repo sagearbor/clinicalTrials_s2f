@@ -12,6 +12,7 @@ def get_tasks_from_checklist():
         
     with open(CHECKLIST_FILE, 'r') as f:
         try:
+            # Correctly load data from the YAML file
             return yaml.safe_load(f)
         except yaml.YAMLError as e:
             print(f"Error parsing YAML file: {e}")
@@ -19,10 +20,11 @@ def get_tasks_from_checklist():
 
 def generate_prompt(task):
     """Generates a detailed, copy-paste ready prompt for a given task."""
+    agent_id = task['agentId']
     
-    prompt = f"### Task: Execute Agent {task['agentId']} - {task['name']}\n\n"
+    prompt = f"### Task: Execute Agent {agent_id} - {task['name']}\n\n"
     prompt += "**Objective:**\n"
-    prompt += f"Your primary goal is to write the Python script and any other necessary artifacts to fulfill the objective for Agent {task['agentId']}. Refer to `config/agents.md` for the detailed business logic, inputs, and outputs.\n\n"
+    prompt += f"Your primary goal is to write the Python script and any other necessary artifacts to fulfill the objective for Agent {agent_id}. Refer to `config/agents.md` for the detailed business logic, inputs, and outputs.\n\n"
     prompt += "**Mandatory Project Standards:**\n"
     prompt += "While writing the code, you must adhere to all project-wide standards defined in the root `AGENTS.md` file, including:\n"
     prompt += "1.  **Configuration:** Use `dotenv` and `os.getenv`.\n"
@@ -31,8 +33,8 @@ def generate_prompt(task):
     prompt += "4.  **Unit Tests:** Create a corresponding test file in the `/tests` directory and mock all external calls.\n\n"
     prompt += "**CRITICAL - COMPLETION PROTOCOL:**\n"
     prompt += "After you have successfully created the agent's code and artifacts, you **must** perform the following two final actions to complete this task:\n"
-    prompt += f"1.  **Update Checklist:** Modify `config/checklist.yml` to set the `status` for `agentId: {task['agentId']}` to `100` (or a partial percentage if not fully complete).\n"
-    prompt += f"2.  **Write Log File:** Create a new JSON log file in the `PROGRESS_LOGS/new/` directory. The file should be named in the format `{task['agentId']}-<status>-<timestamp>.json` and contain a summary of the work completed."
+    prompt += f"1.  **Update Checklist:** Modify `config/checklist.yml` to set the `status` for `agentId: {agent_id}` to `100` (or a partial percentage if not fully complete).\n"
+    prompt += f"2.  **Write Log File:** Create a new JSON log file in the `PROGRESS_LOGS/new/` directory. The file should be named in the format `{agent_id}-<status>-<timestamp>.json` and contain a summary of the work completed."
     
     return prompt
 
