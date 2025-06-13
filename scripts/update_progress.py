@@ -61,7 +61,7 @@ def main():
 *This report is auto-generated. Do not edit directly.*
 *Run the "Update Progress Report" action to regenerate.*
 
-*Last updated: {datetime.utcnow().isoformat()}Z*
+*Last updated: {datetime.now(datetime.UTC)().isoformat()}Z*
 
 ---
 

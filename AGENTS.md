@@ -79,7 +79,20 @@ This document defines the mandatory, project-wide standards that all AI agents m
 
 ---
 
-### **4. Unit Testing Standard**
+### **4. Code Quality & Conventions**
+Objective: To ensure all Python code is modern, clean, and follows best practices.
+
+Instructions:
+
+Timestamps: The datetime.datetime.utcnow() function is forbidden as it is deprecated. For all timezone-aware UTC timestamps, you must import datetime and then use datetime.datetime.now(datetime.UTC). Note that UTC is an attribute of the datetime module itself.
+
+String Formatting: Use f-strings (e.g., f"My value is {my_variable}") for all string formatting. Do not use + concatenation or the .format() method.
+
+Path Handling: Use os.path.join() or pathlib.Path to construct file paths to ensure cross-platform compatibility. Do not use hardcoded slashes (/ or \).
+
+---
+
+### **5. Unit Testing Standard**
 
 -   **Objective:** To ensure all agent logic is verifiable, robust, and self-contained.
 -   **Instructions:**
