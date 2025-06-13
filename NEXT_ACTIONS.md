@@ -10,8 +10,3 @@ The following tasks are available to be worked on in parallel. Their dependencie
   - **Status:** 0%
   - **Priority:** CRITICAL PATH
 
-- **Task ID:** `1.4`
-  - **Name:** Full Protocol Generation Agent
-  - **Status:** 0%
-  - **Priority:** Standard Task
-
