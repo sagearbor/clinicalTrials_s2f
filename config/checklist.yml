@@ -15,7 +15,7 @@
 
 - agentId: 1.200
   name: Patient Population Analysis Agent
-  status: 0
+  status: 100
   dependencies: [1.100]
   critical_path: true
 
