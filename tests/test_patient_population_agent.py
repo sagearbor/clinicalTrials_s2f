@@ -36,7 +36,8 @@ def test_generate_report_creates_json(tmp_path, mocker):
     
     # Mock both the external API and LLM calls
     mocker.patch('requests.post', return_value=mocker.Mock(json=lambda: mock_counts, raise_for_status=lambda: None))
-    mocker.patch('litellm.completion', return_value=MockLLMResponse('Summary text'))
+    mocker.patch('scripts.patient_population_agent.completion', return_value=MockLLMResponse('Summary text'))
+    mocker.patch('scripts.patient_population_agent.get_llm_model_name', return_value='test-model')
 
     # 2. Execution
     out_dir = tmp_path / 'output'

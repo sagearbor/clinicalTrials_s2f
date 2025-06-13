@@ -88,8 +88,8 @@ def write_progress_log(log_dir, status, summary):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     
-    # This is the corrected timestamp line
-    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
+    # This is the corrected timestamp line using datetime.UTC
+    timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d%H%M%S")
     log_file_name = f"1.200-{status}-{timestamp}.json"
     log_path = os.path.join(log_dir, log_file_name)
     
