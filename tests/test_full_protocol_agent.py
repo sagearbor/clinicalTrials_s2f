@@ -38,7 +38,8 @@ def test_generate_full_protocol_creates_docx(tmp_path, mocker):
 
     # 2. Mocking: Mock the external LLM call
     mock_resp = DummyResponse('Section A\nSection B')
-    mocker.patch('litellm.completion', return_value=mock_resp)
+    mocker.patch('scripts.full_protocol_agent.completion', return_value=mock_resp)
+    mocker.patch('scripts.full_protocol_agent.get_llm_model_name', return_value='test-model')
 
     # 3. Execution: Run the agent's main function
     out_dir = tmp_path / 'out'

@@ -37,7 +37,8 @@ def test_generate_synopsis_creates_docx(tmp_path, mocker):
     }
     # Use the more robust mock response class
     mock_resp = MockLLMResponse('Rationale\nStudy Design')
-    mocker.patch('litellm.completion', return_value=mock_resp)
+    mocker.patch('scripts.protocol_synopsis_agent.completion', return_value=mock_resp)
+    mocker.patch('scripts.protocol_synopsis_agent.get_llm_model_name', return_value='test-model')
 
     # 2. Execution
     out_dir = tmp_path / 'output'
@@ -46,8 +47,9 @@ def test_generate_synopsis_creates_docx(tmp_path, mocker):
     # 3. Assertion
     assert Path(path).exists()
     doc = Document(path)
-    assert 'Rationale' in doc.paragraphs[0].text
-    assert 'Study Design' in doc.paragraphs[1].text
+    # The first paragraph is the heading; check subsequent paragraphs
+    assert 'Rationale' in doc.paragraphs[1].text
+    assert 'Study Design' in doc.paragraphs[2].text
 
 
 def test_update_checklist(tmp_path):
