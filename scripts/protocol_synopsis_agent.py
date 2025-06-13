@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from datetime import datetime
+import datetime
 from typing import Dict
 
 from dotenv import load_dotenv
@@ -75,7 +75,7 @@ def write_progress_log(log_dir: str, status: int, summary: str) -> str:
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    timestamp = datetime.now(datetime.UTC)().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d%H%M%S")
     filename = f"{AGENT_ID}-{status}-{timestamp}.json"
     path = os.path.join(log_dir, filename)
 
