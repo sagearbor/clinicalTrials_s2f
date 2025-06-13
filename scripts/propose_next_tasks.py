@@ -5,9 +5,7 @@ CHECKLIST_FILE = os.path.join('config', 'checklist.yml')
 OUTPUT_FILE = 'NEXT_ACTIONS.md'
 
 def get_tasks_from_checklist():
-    """
-    Parses the checklist.yml file to get the list of tasks.
-    """
+    """Parses the checklist.yml file to get the list of tasks."""
     if not os.path.exists(CHECKLIST_FILE):
         print(f"Error: Checklist file not found at {CHECKLIST_FILE}")
         return []
@@ -19,10 +17,27 @@ def get_tasks_from_checklist():
             print(f"Error parsing YAML file: {e}")
             return []
 
+def generate_prompt(task):
+    """Generates a detailed, copy-paste ready prompt for a given task."""
+    
+    prompt = f"### Task: Execute Agent {task['agentId']} - {task['name']}\n\n"
+    prompt += "**Objective:**\n"
+    prompt += f"Your primary goal is to write the Python script and any other necessary artifacts to fulfill the objective for Agent {task['agentId']}. Refer to `config/agents.md` for the detailed business logic, inputs, and outputs.\n\n"
+    prompt += "**Mandatory Project Standards:**\n"
+    prompt += "While writing the code, you must adhere to all project-wide standards defined in the root `AGENTS.md` file, including:\n"
+    prompt += "1.  **Configuration:** Use `dotenv` and `os.getenv`.\n"
+    prompt += "2.  **Logging:** Implement level-based logging using the `setup_logging` utility.\n"
+    prompt += "3.  **LLM Calls:** Use the `litellm` library via the `get_llm_model_name` utility.\n"
+    prompt += "4.  **Unit Tests:** Create a corresponding test file in the `/tests` directory and mock all external calls.\n\n"
+    prompt += "**CRITICAL - COMPLETION PROTOCOL:**\n"
+    prompt += "After you have successfully created the agent's code and artifacts, you **must** perform the following two final actions to complete this task:\n"
+    prompt += f"1.  **Update Checklist:** Modify `config/checklist.yml` to set the `status` for `agentId: {task['agentId']}` to `100` (or a partial percentage if not fully complete).\n"
+    prompt += f"2.  **Write Log File:** Create a new JSON log file in the `PROGRESS_LOGS/new/` directory. The file should be named in the format `{task['agentId']}-<status>-<timestamp>.json` and contain a summary of the work completed."
+    
+    return prompt
+
 def main():
-    """
-    Identifies available tasks based on dependencies and writes them to an output file.
-    """
+    """Identifies available tasks and writes detailed prompts to an output file."""
     tasks = get_tasks_from_checklist()
     if not tasks:
         print("No tasks found in checklist. Aborting.")
@@ -32,43 +47,34 @@ def main():
     
     available_tasks = []
     for task in tasks:
-        # Skip if already complete
         if task.get('status', 0) == 100:
             continue
-
-        # Check if all dependencies are met
-        dependencies_met = True
-        for dep_id in task.get('dependencies', []):
-            if task_status.get(dep_id, 0) != 100:
-                dependencies_met = False
-                break
-        
+        dependencies_met = all(task_status.get(dep_id, 0) == 100 for dep_id in task.get('dependencies', []))
         if dependencies_met:
             available_tasks.append(task)
             
-    # Sort by critical path first, then by agentId
     available_tasks.sort(key=lambda x: (not x.get('critical_path', False), x['agentId']))
     
-    # Generate the output file content
     content = "## Next Available Actions\n\n"
-    content += "*This report is auto-generated. Do not edit directly.*\n"
-    content += "*Run the 'Propose Next Actions' workflow to regenerate.*\n\n"
-    content += "The following tasks are available to be worked on in parallel. Their dependencies have been met.\n\n"
+    content += "*This report is auto-generated. Run the 'Propose Next Actions' workflow to regenerate.*\n\n"
     
     if not available_tasks:
         content += "**No actions available. All tasks are either complete or waiting on dependencies.**"
     else:
+        content += "Copy the full text for a task below and provide it to the AI agent (e.g., Codex).\n\n"
+        content += "---\n\n"
         for task in available_tasks:
             path_marker = "CRITICAL PATH" if task.get('critical_path') else "Standard Task"
-            content += f"- **Task ID:** `{task['agentId']}`\n"
-            content += f"  - **Name:** {task['name']}\n"
-            content += f"  - **Status:** {task.get('status', 0)}%\n"
-            content += f"  - **Priority:** {path_marker}\n\n"
+            content += f"### Task ID: `{task['agentId']}` ({path_marker})\n"
+            content += "```markdown\n"
+            content += generate_prompt(task)
+            content += "\n```\n\n"
+            content += "---\n\n"
             
     with open(OUTPUT_FILE, 'w') as f:
         f.write(content)
         
-    print(f"Successfully updated {OUTPUT_FILE} with {len(available_tasks)} available actions.")
+    print(f"Successfully updated {OUTPUT_FILE} with prompts for {len(available_tasks)} available actions.")
 
 if __name__ == "__main__":
     main()
