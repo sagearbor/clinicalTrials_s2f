@@ -9,7 +9,7 @@
 
 - agentId: 1.100
   name: Protocol Synopsis Generation Agent
-  status: 0
+  status: 100
   dependencies: []
   critical_path: true
 
@@ -27,7 +27,7 @@
 
 - agentId: 1.400
   name: Full Protocol Generation Agent
-  status: 0
+  status: 100
   dependencies: [1.100]
   critical_path: false
 
