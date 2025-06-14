@@ -41,6 +41,6 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: ${{ steps.check_script.outputs.email_subject }}
           body: ${{ steps.check_script.outputs.email_body }}
-          to: user@example.com # Change to your email address
-          from: GitHub Actions Bot <github-actions-bot@example.com>
+          to: sage.arbor@duke.edu,dylan.thibault@duke.edu # Change to your email address
+          from: GitHub Actions Bot clinicaltrials_s2f <github-actions-bot@example.com>
           content_type: text/markdown
