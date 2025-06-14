@@ -1,0 +1,30 @@
+# This GitHub Action acts as a watchdog to notify developers of new action items.
+
+name: Check for Action Items
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Runs the workflow automatically every hour
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  check-for-items:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      
+      # No dependencies needed for this simple script, but it's good practice
+      - name: Install dependencies 
+        run: pip install -r requirements.txt
+
+      - name: Run check action items script
+        run: python scripts/check_action_items.py
+

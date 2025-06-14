@@ -1,8 +1,32 @@
 import os
-import yaml # You will need to install PyYAML: pip install pyyaml
+import sys
+import yaml
+import frontmatter
 
+# Add project root to the Python path to allow for local imports
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+# --- Constants ---
 CHECKLIST_FILE = os.path.join('config', 'checklist.yml')
+ACTION_ITEMS_DIR = 'ACTION_ITEMS'
 OUTPUT_FILE = 'NEXT_ACTIONS.md'
+
+def check_for_blockers():
+    """Scans the ACTION_ITEMS directory for any blocking issues."""
+    if not os.path.exists(ACTION_ITEMS_DIR):
+        return []
+    
+    blocking_issues = []
+    for filename in os.listdir(ACTION_ITEMS_DIR):
+        if filename.endswith('.md'):
+            try:
+                with open(os.path.join(ACTION_ITEMS_DIR, filename), 'r', encoding='utf-8') as f:
+                    post = frontmatter.load(f)
+                    if post.get('blocker') is True:
+                        blocking_issues.append(filename)
+            except Exception as e:
+                print(f"Warning: Could not parse action item {filename}: {e}")
+    return blocking_issues
 
 def get_tasks_from_checklist():
     """Parses the checklist.yml file to get the list of tasks."""
@@ -12,7 +36,6 @@ def get_tasks_from_checklist():
         
     with open(CHECKLIST_FILE, 'r') as f:
         try:
-            # Correctly load data from the YAML file
             return yaml.safe_load(f)
         except yaml.YAMLError as e:
             print(f"Error parsing YAML file: {e}")
@@ -39,7 +62,20 @@ def generate_prompt(task):
     return prompt
 
 def main():
-    """Identifies available tasks and writes detailed prompts to an output file."""
+    """Checks for blockers, then identifies and proposes next available tasks."""
+    blockers = check_for_blockers()
+    
+    if blockers:
+        content = "## WORKFLOW BLOCKED\n\n"
+        content += "**The workflow is halted pending human intervention. The following blocking issues must be resolved:**\n\n"
+        for issue in blockers:
+            content += f"- `{issue}`\n"
+        with open(OUTPUT_FILE, 'w') as f:
+            f.write(content)
+        print(f"HALTED: Found {len(blockers)} blocking issues. See {OUTPUT_FILE}.")
+        return
+
+    # --- If no blockers, proceed with proposing next tasks ---
     tasks = get_tasks_from_checklist()
     if not tasks:
         print("No tasks found in checklist. Aborting.")

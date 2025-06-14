@@ -80,15 +80,12 @@ This document defines the mandatory, project-wide standards that all AI agents m
 ---
 
 ### **4. Code Quality & Conventions**
-Objective: To ensure all Python code is modern, clean, and follows best practices.
 
-Instructions:
-
-Timestamps: The datetime.datetime.utcnow() function is forbidden as it is deprecated. For all timezone-aware UTC timestamps, you must import datetime and then use datetime.datetime.now(datetime.UTC). Note that UTC is an attribute of the datetime module itself.
-
-String Formatting: Use f-strings (e.g., f"My value is {my_variable}") for all string formatting. Do not use + concatenation or the .format() method.
-
-Path Handling: Use os.path.join() or pathlib.Path to construct file paths to ensure cross-platform compatibility. Do not use hardcoded slashes (/ or \).
+-   **Objective:** To ensure all Python code is modern, clean, and follows best practices.
+-   **Instructions:**
+    1.  **Timestamps:** The `datetime.datetime.utcnow()` function is **forbidden** as it is deprecated. For all timezone-aware UTC timestamps, you **must** `import datetime` and then use `datetime.datetime.now(datetime.timezone.utc)`.
+    2.  **String Formatting:** Use f-strings (e.g., `f"My value is {my_variable}"`) for all string formatting. Do not use `+` concatenation or the `.format()` method.
+    3.  **Path Handling:** Use `os.path.join()` or `pathlib.Path` to construct file paths to ensure cross-platform compatibility. Do not use hardcoded slashes (`/` or `\`).
 
 ---
 
@@ -127,4 +124,28 @@ Path Handling: Use os.path.join() or pathlib.Path to construct file paths to ens
         # 4. Assertion: Check if the result is as expected
         assert result is not None
         assert "mock response" in result
+    ```
+
+---
+
+### **6. Reporting Action Items (NEW SECTION)**
+
+-   **Objective:** To provide a standardized way for agents to report issues that require human intervention without halting their primary task unless necessary.
+-   **Instructions:**
+    1.  If you encounter an issue that requires a human to take action (e.g., a missing environment variable, a required library to be installed), you **MUST** create a new Markdown file in the `/ACTION_ITEMS` directory.
+    2.  The filename should be descriptive (e.g., `add-pillow-dependency.md`).
+    3.  The file **MUST** begin with YAML frontmatter containing `blocker: true` if the issue prevents further agentic work, or `blocker: false` if it's a non-critical follow-up.
+    4.  The body of the file should clearly describe the issue and the required action.
+
+    **Example Action Item File (`/ACTION_ITEMS/missing-dependency.md`):**
+    ```markdown
+    ---
+    blocker: false
+    priority: medium
+    agent_id: 2.200
+    ---
+    
+    **Issue:** The agent required the `Pillow` library for image generation.
+    
+    **Action Required:** Please add `Pillow` to the `requirements.txt` file and reinstall dependencies.
     ```

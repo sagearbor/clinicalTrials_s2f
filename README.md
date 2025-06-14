@@ -1,7 +1,6 @@
-# clinicalTrials_s2f - Agentic AI for Clinical Trial Automation
+# Agentic AI for Clinical Trial Automation
 
 ## Overview
-Agents doing clinical trials from start to finish
 
 This project is an end-to-end, modular AI agentic solution designed to dramatically accelerate and improve the efficiency of clinical trials. By breaking down the complex lifecycle of a trial into discrete, automated tasks, this system aims to reduce timelines, lower costs, and minimize human error from study design to final reporting.
 
@@ -12,13 +11,14 @@ The system is built as a collection of specialized AI agents that are orchestrat
 This repository is designed as a reusable framework for agentic workflows. The core logic is separated from the project-specific configuration.
 
 -   **`/scripts`**: Contains the generic Python "engine" for the workflow, including the scripts for proposing tasks and updating progress.
--   **`/config`**: Contains the project-specific definitions, including the list of tasks (`checklist.yml`) and the detailed agent specifications (`agents.md`). To adapt this framework for a new project, you would primarily edit the files in this directory.
+-   **`/config`**: Contains the project-specific definitions, including the list of tasks (`checklist.yml`) and the detailed agent specifications (`agents.md`).
 -   **`/PROGRESS_LOGS`**: A directory where each agent records its work by writing a unique JSON log file upon task completion. This creates an auditable trail and prevents conflicts.
+-   **`/ACTION_ITEMS`**: An "inbox" for issues discovered by agents that require human intervention. Agents will create markdown files here detailing the issue (e.g., a missing dependency, a required API key).
 -   **`.github/workflows`**: Contains GitHub Actions that automate the workflow, allowing you to update reports and propose next tasks with the click of a button in the GitHub UI.
 
 ## Correct Directory Structure
 
-Use the following structure as a guide to ensure all files are in their correct locations. Based on your list, several files need to be moved.
+Use the following structure as a guide to ensure all files are in their correct locations.
 
 
 / (your root project folder)
@@ -44,8 +44,8 @@ Use the following structure as a guide to ensure all files are in their correct 
 
 -   **[config/agents.md](config/agents.md):** The master design document. It contains detailed specifications for each AI agent.
 -   **[config/checklist.yml](config/checklist.yml):** The granular task list and state tracker for the entire project.
--   **[PROGRESS.md](PROGRESS.md):** An auto-generated report summarizing the project's status based on the logs.
--   **[NEXT_ACTIONS.md](NEXT_ACTIONS.md):** An auto-generated file that lists the next set of tasks that are ready to be worked on in parallel.
+-   **[PROGRESS.md](PROGRESS.md):** An auto-generated report summarizing the project's status and any blocking action items.
+-   **[NEXT_ACTIONS.md](NEXT_ACTIONS.md):** An auto-generated file that lists the next set of tasks that are ready to be worked on in parallel, or indicates if the workflow is blocked.
 
 ## Getting Started
 
