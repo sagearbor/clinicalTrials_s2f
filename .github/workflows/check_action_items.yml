@@ -10,7 +10,7 @@ on:
     - cron: '0 * * * *'
 
 jobs:
-  check-for-items:
+  check-and-notify:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -21,10 +21,26 @@ jobs:
         with:
           python-version: '3.9'
       
-      # No dependencies needed for this simple script, but it's good practice
-      - name: Install dependencies 
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run check action items script
+      - name: Run Check Action Items Script
+        id: check_script # Give this step an ID to access its outputs
         run: python scripts/check_action_items.py
 
+      - name: Send Email Notification
+        # This step only runs if the python script's output 'send_email' was 'true'
+        if: steps.check_script.outputs.send_email == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com # Or your email provider's SMTP server
+          server_port: 465
+          # NOTE: You must create these secrets in your repository settings
+          # Go to Settings > Secrets and variables > Actions
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: ${{ steps.check_script.outputs.email_subject }}
+          body: ${{ steps.check_script.outputs.email_body }}
+          to: user@example.com # Change to your email address
+          from: GitHub Actions Bot <github-actions-bot@example.com>
+          content_type: text/markdown

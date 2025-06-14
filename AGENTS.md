@@ -128,7 +128,7 @@ This document defines the mandatory, project-wide standards that all AI agents m
 
 ---
 
-### **6. Reporting Action Items (NEW SECTION)**
+### **6. Reporting Action Items**
 
 -   **Objective:** To provide a standardized way for agents to report issues that require human intervention without halting their primary task unless necessary.
 -   **Instructions:**
