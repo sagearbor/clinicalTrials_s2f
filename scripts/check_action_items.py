@@ -29,27 +29,30 @@ def update_sent_notifications(notified_files):
 
 def main():
     """
-    Checks for NEW action items that haven't been logged and sends a notification.
+    Checks for NEW action items and constructs a title and body for a GitHub Issue.
     """
+    github_output_file = os.getenv('GITHUB_OUTPUT')
+
     if not os.path.exists(ACTION_ITEMS_DIR):
-        print("ACTION_ITEMS directory not found. Nothing to do.")
+        print("ACTION_ITEMS directory not found. Nothing to report.")
+        if github_output_file:
+            with open(github_output_file, 'a') as f:
+                f.write("create_issue=false\n")
         sys.exit(0)
 
-    # 1. Load state
     sent_files = load_sent_notifications()
     current_files = {f for f in os.listdir(ACTION_ITEMS_DIR) if f.endswith('.md')}
-    
-    # 2. Determine what's new
     new_items_to_notify = list(current_files - sent_files)
 
     if not new_items_to_notify:
-        print("No new action items found to notify.")
-        print("::set-output name=send_email::false")
+        print("No new action items found to create an issue for.")
+        if github_output_file:
+            with open(github_output_file, 'a') as f:
+                f.write("create_issue=false\n")
         sys.exit(0)
 
-    print(f"Found {len(new_items_to_notify)} new action item(s) to notify about.")
+    print(f"Found {len(new_items_to_notify)} new action item(s).")
 
-    # 3. Process only the new items for the email
     items_content = []
     is_blocker = False
     for filename in new_items_to_notify:
@@ -58,38 +61,33 @@ def main():
                 post = frontmatter.load(f)
                 if post.get('blocker') is True:
                     is_blocker = True
-                header = f"### 📄 {filename} (Priority: {post.get('priority', 'Normal')})"
+                header = f"### 📄 `{filename}` (Priority: {post.get('priority', 'Normal')})"
                 body = post.content
                 items_content.append(f"{header}\n\n{body}\n\n---\n")
         except Exception as e:
-            items_content.append(f"### 📄 {filename}\n\n**ERROR:** Could not parse file: {e}\n\n---\n")
+            items_content.append(f"### 📄 `{filename}`\n\n**ERROR:** Could not parse file: {e}\n\n---\n")
 
-    # 4. Construct email subject and body
-    if is_blocker:
-        subject = "[ACTION REQUIRED] CRITICAL BLOCKER in Agentic Workflow"
-    else:
-        subject = f"[ACTION REQUIRED] {len(new_items_to_notify)} New Action Item(s) Logged"
-
-    email_body = (
+    issue_title = "🔴 CRITICAL BLOCKER: Human Intervention Required" if is_blocker else f"🟡 Action Items Logged: {len(new_items_to_notify)} New Task(s)"
+    
+    issue_body = (
         "## Automated Alert: Human Intervention Required\n\n"
         "The following new action items were logged by agents and require your review. "
-        "After resolving an issue, please delete the corresponding markdown file from the `/ACTION_ITEMS` directory.\n\n"
-        "---"
-        "\n\n" + "\n".join(items_content)
+        "After resolving an issue, please **delete the corresponding markdown file** from the `/ACTION_ITEMS` directory and **close this issue**.\n\n"
+        "---\n\n" + "\n".join(items_content)
     )
 
-    # 5. Set outputs for the GitHub Action
-    print("::set-output name=send_email::true")
-    print(f"::set-output name=email_subject::{subject}")
-    email_body_escaped = email_body.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
-    print(f"::set-output name=email_body::{email_body_escaped}")
+    if github_output_file:
+        with open(github_output_file, 'a') as f:
+            f.write("create_issue=true\n")
+            f.write(f"issue_title={issue_title}\n")
+            f.write("issue_body<<EOF\n")
+            f.write(issue_body)
+            f.write("\nEOF\n")
     
-    # 6. CRITICAL FIX: Update the log with ALL current files
     update_sent_notifications(current_files)
     
-    print("Email outputs set. Exiting successfully.")
+    print("GitHub Issue outputs set. Exiting successfully.")
     sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

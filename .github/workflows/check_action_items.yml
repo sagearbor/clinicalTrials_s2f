@@ -1,17 +1,20 @@
-# This GitHub Action acts as a watchdog to notify developers of new action items.
+# This GitHub Action checks for new action items and creates a GitHub Issue to notify developers.
 
 name: Check for Action Items
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  # Runs the workflow automatically every hour
   schedule:
     - cron: '0 * * * *'
 
 jobs:
-  check-and-notify:
+  check-for-items:
     runs-on: ubuntu-latest
+    outputs:
+      create_issue: ${{ steps.check_script.outputs.create_issue }}
+      issue_title: ${{ steps.check_script.outputs.issue_title }}
+      issue_body: ${{ steps.check_script.outputs.issue_body }}
+      
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -25,22 +28,25 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run Check Action Items Script
-        id: check_script # Give this step an ID to access its outputs
+        id: check_script
         run: python scripts/check_action_items.py
 
-      - name: Send Email Notification
-        # This step only runs if the python script's output 'send_email' was 'true'
-        if: steps.check_script.outputs.send_email == 'true'
-        uses: dawidd6/action-send-mail@v3
+  create-issue:
+    needs: check-for-items
+    if: needs.check-for-items.outputs.create_issue == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write # IMPORTANT: This permission is required to create issues
+      
+    steps:
+      - name: Create GitHub Issue
+        uses: peter-evans/create-issue-from-file@v5
         with:
-          server_address: smtp.gmail.com # Or your email provider's SMTP server
-          server_port: 465
-          # NOTE: You must create these secrets in your repository settings
-          # Go to Settings > Secrets and variables > Actions
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: ${{ steps.check_script.outputs.email_subject }}
-          body: ${{ steps.check_script.outputs.email_body }}
-          to: sage.arbor@duke.edu,dylan.thibault@duke.edu # Change to your email address
-          from: GitHub Actions Bot clinicaltrials_s2f <github-actions-bot@example.com>
-          content_type: text/markdown
+          title: ${{ needs.check-for-items.outputs.issue_title }}
+          content: ${{ needs.check-for-items.outputs.issue_body }}
+          labels: |
+            bug
+            human-required
+            agent-reported
+          # Add the GitHub usernames of the people you want to notify, separated by commas.
+          assignees: sagearbor #,dthibault # Assumes 'dthibault' is the username for Dylan.

@@ -13,8 +13,8 @@ This repository is designed as a reusable framework for agentic workflows. The c
 -   **`/scripts`**: Contains the generic Python "engine" for the workflow, including the scripts for proposing tasks and updating progress.
 -   **`/config`**: Contains the project-specific definitions, including the list of tasks (`checklist.yml`) and the detailed agent specifications (`agents.md`).
 -   **`/PROGRESS_LOGS`**: A directory where each agent records its work by writing a unique JSON log file upon task completion. This creates an auditable trail and prevents conflicts.
--   **`/ACTION_ITEMS`**: An "inbox" for issues discovered by agents that require human intervention. Agents will create markdown files here detailing the issue (e.g., a missing dependency, a required API key).
--   **`.github/workflows`**: Contains GitHub Actions that automate the workflow, allowing you to update reports and propose next tasks with the click of a button in the GitHub UI.
+-   **`/ACTION_ITEMS`**: An "inbox" for issues discovered by agents that require human intervention. When a new file appears here, a GitHub Action automatically creates a new Issue in the repository.
+-   **`.github/workflows`**: Contains GitHub Actions that automate the workflow, allowing you to update reports, propose next tasks, and create notification issues.
 
 ## Correct Directory Structure
 
@@ -24,12 +24,14 @@ Use the following structure as a guide to ensure all files are in their correct 
 / (your root project folder)
 ├── .github/
 │   └── workflows/
+│       ├── check_action_items.yml
 │       ├── progress_updater.yml
 │       └── task_proposer.yml
 ├── config/
 │   ├── agents.md
 │   └── checklist.yml
 ├── scripts/
+│   ├── check_action_items.py
 │   ├── propose_next_tasks.py
 │   └── update_progress.py
 ├── .env.example
@@ -70,7 +72,7 @@ Use the following structure as a guide to ensure all files are in their correct 
 
 3.  **Install Python dependencies:**
     ```bash
-    pip install pyyaml
+    pip install -r requirements.txt
     ```
 
 4.  **Run the Workflow:**
@@ -78,3 +80,4 @@ Use the following structure as a guide to ensure all files are in their correct 
     -   Run the "Propose Next Actions" workflow to generate the `NEXT_ACTIONS.md` file.
     -   Begin development on the proposed tasks.
     -   After agents have run and produced logs, run the "Update Progress Report" workflow to update `PROGRESS.md`.
+    -   The "Check for Action Items" workflow will run automatically on a schedule to notify you of any issues.
