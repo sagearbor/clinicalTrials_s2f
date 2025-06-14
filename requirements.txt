@@ -10,6 +10,7 @@ openai              # Required by LiteLLM for OpenAI/Azure providers.
 # Add libraries here as needed by specific agents.
 python-docx         # For Agent 1.100 to create .docx files.
 requests            # General purpose HTTP requests, useful for API-based agents.
+pillow              # For image generation in Agent 2.200
 
 # Testing Dependencies
 pytest>=7.0.0       # The testing framework for running tests.
