@@ -43,20 +43,16 @@ jobs:
       
     steps:
       - name: Create GitHub Issue
-        # Using the specific commit SHA to bypass tag resolution issues.
+        # Using the action that we have confirmed the runner can find.
         uses: JasonEtco/create-an-issue@v2
+        # This action requires the GITHUB_TOKEN to be passed in the 'env' block.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # This action requires the GITHUB_TOKEN, which is automatically provided.
-          token: ${{ secrets.GITHUB_TOKEN }}
           # Sets the issue title using the output from the 'check-for-items' job.
           title: ${{ needs.check-for-items.outputs.issue_title }}
           # Sets the issue body using the output from the 'check-for-items' job.
           body: ${{ needs.check-for-items.outputs.issue_body }}
-          # Applies labels to the newly created issue for easy filtering.
-          labels: |
-            bug
-            human-required
-            agent-reported
-          # Assigns the issue to specific GitHub users, who will be notified.
-          # To add more users, list each GitHub username on a new, indented line.
+          # This action requires labels and assignees to be a comma-separated string.
+          labels: bug,human-required,agent-reported
           assignees: sagearbor
