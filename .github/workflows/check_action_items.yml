@@ -42,13 +42,21 @@ jobs:
       issues: write # IMPORTANT: This permission is required to create issues
       
     steps:
+      # NEW: This step prints the inputs to the log for debugging purposes.
+      - name: Debug Inputs
+        run: |
+          echo "--- DEBUGGING WORKFLOW INPUTS ---"
+          echo "Issue Title: ${{ needs.check-for-items.outputs.issue_title }}"
+          echo "Issue Body: ${{ needs.check-for-items.outputs.issue_body }}"
+          echo "-----------------------------------"
+
       - name: Create GitHub Issue
-        # CORRECTED: Use the 'create-issue' action, not 'create-issue-from-file'
+        # Using a popular, well-maintained action for creating issues.
         uses: peter-evans/create-issue@v5
         with:
-          # Sets the issue title using the output from the previous job.
+          # Sets the issue title using the output from the 'check-for-items' job.
           title: ${{ needs.check-for-items.outputs.issue_title }}
-          # CORRECTED: Use the 'body' input, not the invalid 'content' input.
+          # Sets the issue body using the output from the 'check-for-items' job.
           body: ${{ needs.check-for-items.outputs.issue_body }}
           # Applies labels to the newly created issue for easy filtering.
           labels: |
@@ -56,6 +64,5 @@ jobs:
             human-required
             agent-reported
           # Assigns the issue to specific GitHub users, who will be notified.
-          # This block should ONLY contain valid GitHub usernames, each on a new line.
-          assignees: |
-            sagearbor
+          # To add more users, list each GitHub username on a new, indented line.
+          assignees: sagearbor
