@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Create GitHub Issue
         # Using the specific commit SHA to bypass tag resolution issues.
-        uses: actions/create-issue@174a75932996ece7b244521d8b20752123537DDc # This corresponds to the latest version of the action
+        uses: JasonEtco/create-an-issue@v2
         with:
           # This action requires the GITHUB_TOKEN, which is automatically provided.
           token: ${{ secrets.GITHUB_TOKEN }}
