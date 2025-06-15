@@ -1,4 +1,4 @@
-# This GitHub Action checks for new action items and creates a GitHub Issue to notify developers.
+# This GitHub Action uses artifacts to pass data between jobs for robust issue creation.
 
 name: Check for Action Items
 
@@ -8,14 +8,13 @@ on:
     - cron: '0 * * * *'
 
 jobs:
-  # The first job, named 'check-for-items'. Its purpose is to run the Python script.
+  # The first job, named 'check-for-items'. Its purpose is to run the Python script
+  # and upload the results as an artifact.
   check-for-items:
     runs-on: ubuntu-latest
-    # Defines the outputs that this job will pass to the next job.
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
-      issue_body: ${{ steps.check_script.outputs.issue_body }}
       
     steps:
       - name: Check out repository
@@ -33,22 +32,45 @@ jobs:
         id: check_script
         run: python scripts/check_action_items.py
 
-  # The second job, named 'create-issue'. Its purpose is to create the GitHub Issue.
+      # This step saves the multi-line issue body to a file
+      - name: Save issue body to file
+        if: steps.check_script.outputs.create_issue == 'true'
+        run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
+
+      # This step uploads the file as an artifact for the next job
+      - name: Upload issue body artifact
+        if: steps.check_script.outputs.create_issue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-data
+          path: issue_body.md
+
+  # The second job, named 'create-issue'. Its purpose is to download the artifact and create the issue.
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      contents: read
       
     steps:
+      # We need to check out the repo again for the 'gh' command to have context.
+      - name: Check out repository
+        uses: actions/checkout@v4
+        
+      # Download the artifact from the previous job
+      - name: Download issue body artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-data
+          
       - name: Create GitHub Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
         run: |
           gh issue create \
-            --title "${{ needs.check-for-items.outputs.issue_title }}" \
-            --body "${{ needs.check-for-items.outputs.issue_body }}" \
+            --title "$ISSUE_TITLE" \
+            --body-file issue_body.md \
             --label "bug,human-required,agent-reported" \
             --assignee "sagearbor"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
