@@ -42,12 +42,10 @@ jobs:
       issues: write # IMPORTANT: This permission is required to create issues
       
     steps:
-      # NEW: This step prints the inputs to the log for debugging purposes.
       - name: Debug Inputs
         run: |
           echo "--- DEBUGGING WORKFLOW INPUTS ---"
           echo "Issue Title: ${{ needs.check-for-items.outputs.issue_title }}"
-          echo "Issue Body: ${{ needs.check-for-items.outputs.issue_body }}"
           echo "-----------------------------------"
 
       - name: Create GitHub Issue
