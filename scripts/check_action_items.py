@@ -27,32 +27,43 @@ def update_sent_notifications(notified_files):
     except IOError as e:
         print(f"Error: Could not write to notification log: {e}")
 
+def set_github_output(name, value):
+    """Sets an output variable for the GitHub Actions workflow."""
+    github_output_file = os.getenv('GITHUB_OUTPUT')
+    if github_output_file:
+        with open(github_output_file, 'a') as f:
+            # Handle multi-line strings for the issue body
+            if '\n' in value:
+                f.write(f"{name}<<EOF\n")
+                f.write(f"{value}\n")
+                f.write("EOF\n")
+            else:
+                f.write(f"{name}={value}\n")
+
 def main():
     """
-    Checks for NEW action items and constructs a title and body for a GitHub Issue.
+    Checks for NEW action items and sets outputs for the GitHub Action to use.
     """
-    github_output_file = os.getenv('GITHUB_OUTPUT')
-
     if not os.path.exists(ACTION_ITEMS_DIR):
         print("ACTION_ITEMS directory not found. Nothing to report.")
-        if github_output_file:
-            with open(github_output_file, 'a') as f:
-                f.write("create_issue=false\n")
+        set_github_output("create_issue", "false")
         sys.exit(0)
 
+    # 1. Load state
     sent_files = load_sent_notifications()
     current_files = {f for f in os.listdir(ACTION_ITEMS_DIR) if f.endswith('.md')}
+    
+    # 2. Determine what's new
     new_items_to_notify = list(current_files - sent_files)
 
     if not new_items_to_notify:
         print("No new action items found to create an issue for.")
-        if github_output_file:
-            with open(github_output_file, 'a') as f:
-                f.write("create_issue=false\n")
+        set_github_output("create_issue", "false")
         sys.exit(0)
 
     print(f"Found {len(new_items_to_notify)} new action item(s).")
 
+    # 3. Process only the new items for the issue body
     items_content = []
     is_blocker = False
     for filename in new_items_to_notify:
@@ -67,6 +78,7 @@ def main():
         except Exception as e:
             items_content.append(f"### 📄 `{filename}`\n\n**ERROR:** Could not parse file: {e}\n\n---\n")
 
+    # 4. Construct issue title and body
     issue_title = "🔴 CRITICAL BLOCKER: Human Intervention Required" if is_blocker else f"🟡 Action Items Logged: {len(new_items_to_notify)} New Task(s)"
     
     issue_body = (
@@ -76,14 +88,12 @@ def main():
         "---\n\n" + "\n".join(items_content)
     )
 
-    if github_output_file:
-        with open(github_output_file, 'a') as f:
-            f.write("create_issue=true\n")
-            f.write(f"issue_title={issue_title}\n")
-            f.write("issue_body<<EOF\n")
-            f.write(issue_body)
-            f.write("\nEOF\n")
+    # 5. Set outputs for the GitHub Action
+    set_github_output("create_issue", "true")
+    set_github_output("issue_title", issue_title)
+    set_github_output("issue_body", issue_body)
     
+    # 6. Update the log with ALL current files
     update_sent_notifications(current_files)
     
     print("GitHub Issue outputs set. Exiting successfully.")
