@@ -42,16 +42,12 @@ jobs:
       issues: write # IMPORTANT: This permission is required to create issues
       
     steps:
-      - name: Debug Inputs
-        run: |
-          echo "--- DEBUGGING WORKFLOW INPUTS ---"
-          echo "Issue Title: ${{ needs.check-for-items.outputs.issue_title }}"
-          echo "-----------------------------------"
-
       - name: Create GitHub Issue
-        # Using a popular, well-maintained action for creating issues.
-        uses: peter-evans/create-issue@v5
+        # Using an official and well-maintained action for creating issues.
+        uses: actions/create-issue@v2
         with:
+          # This action requires the GITHUB_TOKEN, which is automatically provided.
+          token: ${{ secrets.GITHUB_TOKEN }}
           # Sets the issue title using the output from the 'check-for-items' job.
           title: ${{ needs.check-for-items.outputs.issue_title }}
           # Sets the issue body using the output from the 'check-for-items' job.
