@@ -1,66 +1,82 @@
-# .github/workflows/check-action-items.yml
+# This GitHub Action uses artifacts to pass data between jobs for robust issue creation.
+
 name: Check for Action Items
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'   # every hour
-
-# Global permissions so every job inherits them
-permissions:
-  contents: read
-  issues: write
+    - cron: '0 * * * *'
 
 jobs:
-# --------------------------------------------------
-# 1. Detect whether an issue is needed
-# --------------------------------------------------
+  # The first job, named 'check-for-items'. Its purpose is to run the Python script
+  # and upload the results as an artifact.
   check-for-items:
     runs-on: ubuntu-latest
-
+    # This permission allows the job to read the repository's contents.
+    permissions:
+      contents: read
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
-      issue_title:  ${{ steps.check_script.outputs.issue_title }}
-      issue_body:   ${{ steps.check_script.outputs.issue_body }}
-
+      issue_title: ${{ steps.check_script.outputs.issue_title }}
+      issue_body: ${{ steps.check_script.outputs.issue_body }}
+      
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-
-      - name: Install Python dependencies
+          python-version: '3.9'
+      
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run check script
+      - name: Run Check Action Items Script
         id: check_script
         run: python scripts/check_action_items.py
-        # Inside your Python script **use the new file‑based output syntax**
-        #   with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-        #       fh.write("create_issue=true\n")
-        #       fh.write("issue_title=🚨 Something happened\n")
-        #       fh.write("issue_body<<EOF\nmultiline body here\nEOF\n")
 
-# --------------------------------------------------
-# 2. Create the GitHub Issue (only when needed)
-# --------------------------------------------------
+      # This step saves the multi-line issue body to a file
+      - name: Save issue body to file
+        if: steps.check_script.outputs.create_issue == 'true'
+        run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
+
+      # This step uploads the file as an artifact for the next job
+      - name: Upload issue body artifact
+        if: steps.check_script.outputs.create_issue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-data
+          path: issue_body.md
+
+  # The second job, named 'create-issue'. Its purpose is to download the artifact and create the issue.
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
-
+    # Both 'issues: write' and 'contents: read' are needed for this job.
+    permissions:
+      issues: write
+      contents: read # CORRECTED: Added read permission here as well
+      
     steps:
-      - name: Create issue via GitHub CLI
+      # We need to check out the repo again for the 'gh' command to have context.
+      - name: Check out repository
+        uses: actions/checkout@v4
+        
+      # Download the artifact from the previous job
+      - name: Download issue body artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-data
+          
+      - name: Create GitHub Issue
         env:
-          # gh will pick this up automatically
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
         run: |
-          # Write the body to a temp file so newlines are preserved
-          printf '%s\n' "${{ needs.check-for-items.outputs.issue_body }}" > /tmp/body.md
-
           gh issue create \
-            --title "${{ needs.check-for-items.outputs.issue_title }}" \
-            --body-file /tmp/body.md \
-            --label "bug" --label "human-required" --label "agent-reported" \
+            --title "$ISSUE_TITLE" \
+            --body-file issue_body.md \
+            --label "bug,human-required,agent-reported" \
             --assignee "sagearbor"
