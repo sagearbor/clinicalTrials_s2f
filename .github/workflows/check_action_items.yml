@@ -1,55 +1,79 @@
 # This GitHub Action checks for new action items and creates a GitHub Issue to notify developers.
 
+# The name of the workflow as it will appear in the "Actions" tab of your GitHub repository.
 name: Check for Action Items
 
+# Defines the events that trigger this workflow to run.
 on:
+  # 'workflow_dispatch' allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
+  # 'schedule' runs the workflow automatically on a recurring basis.
   schedule:
+    # Uses cron syntax to run at the top of every hour (minute 0 of every hour, every day).
     - cron: '0 * * * *'
 
+# Defines the jobs that make up the workflow. Jobs can run in parallel or sequentially.
 jobs:
+  # The first job, named 'check-for-items'. Its purpose is to run the Python script.
   check-for-items:
+    # Specifies the type of virtual machine to run the job on. 'ubuntu-latest' is a standard choice.
     runs-on: ubuntu-latest
+    # Defines the outputs that this job will pass to other jobs that depend on it.
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
       issue_body: ${{ steps.check_script.outputs.issue_body }}
       
+    # A list of sequential steps to be executed in this job.
     steps:
+      # Step 1: Checks out your repository code so the workflow can access it.
       - name: Check out repository
         uses: actions/checkout@v4
 
+      # Step 2: Sets up a Python environment for the runner.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
       
+      # Step 3: Installs the necessary Python packages listed in requirements.txt.
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Step 4: Executes your Python script.
       - name: Run Check Action Items Script
+        # 'id' gives this step a unique name so its outputs can be referenced later.
         id: check_script
         run: python scripts/check_action_items.py
 
+  # The second job, named 'create-issue'. Its purpose is to create the GitHub Issue.
   create-issue:
+    # 'needs' specifies that this job will only start after the 'check-for-items' job has successfully completed.
     needs: check-for-items
+    # 'if' makes this job conditional. It will only run if the 'create_issue' output from the previous job is 'true'.
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
+    # Grants the job the specific permission required to create an issue in the repository.
     permissions:
       issues: write # IMPORTANT: This permission is required to create issues
       
     steps:
+      # This single step uses a pre-built action from the GitHub Marketplace.
       - name: Create GitHub Issue
-        # Switched to the correct action that accepts direct text content
+        # Using a popular, well-maintained action for creating issues.
         uses: peter-evans/create-issue@v5
+        # 'with' provides the inputs required by the action.
         with:
+          # Sets the issue title using the output from the 'check-for-items' job.
           title: ${{ needs.check-for-items.outputs.issue_title }}
-          # Use the 'body' input instead of the invalid 'content'
+          # Sets the issue body using the output from the 'check-for-items' job.
           body: ${{ needs.check-for-items.outputs.issue_body }}
+          # Applies labels to the newly created issue for easy filtering.
           labels: |
             bug
             human-required
             agent-reported
+          # Assigns the issue to specific GitHub users, who will be notified.
           assignees: |
             sagearbor
             another-username # Change as needed
