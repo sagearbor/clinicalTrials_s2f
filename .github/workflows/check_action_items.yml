@@ -41,6 +41,10 @@ jobs:
       issues: write # IMPORTANT: This permission is required to create issues
       
     steps:
+      # CORRECTED: Added a checkout step to this job so the 'gh' CLI has repository context.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Create GitHub Issue via CLI
         env:
           # The GITHUB_TOKEN is required for authentication.
