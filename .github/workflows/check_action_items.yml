@@ -43,7 +43,8 @@ jobs:
         run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
 
       - name: Upload issue body artifact
-        if: steps.check_sctipt.outputs.create_issue == 'true'
+        # CORRECTED: Fixed typo from 'check_sctipt' to 'check_script'
+        if: steps.check_script.outputs.create_issue == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: issue-data
