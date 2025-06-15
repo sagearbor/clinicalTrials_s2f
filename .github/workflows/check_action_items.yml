@@ -12,6 +12,9 @@ jobs:
   # and upload the results as an artifact.
   check-for-items:
     runs-on: ubuntu-latest
+    # Add this permissions block to ensure the job can read repository contents.
+    permissions:
+      contents: read
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
