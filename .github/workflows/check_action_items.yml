@@ -1,86 +1,86 @@
-# This GitHub Action uses the official GitHub CLI to create issues for new action items.
-
+# ------------------------------------------------------------
+#  Check for Action Items and (if needed) open a GitHub Issue
+# ------------------------------------------------------------
 name: Check for Action Items
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:          # manual trigger
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 * * * *'       # every hour
+
+# All jobs inherit these permissions
+permissions:
+  contents: read
+  issues:   write
 
 jobs:
-  # The first job, named 'check-for-items'. Its purpose is to run the Python script.
+# ============================================================
+# 1. Run your Python script to decide whether to open an issue
+# ============================================================
   check-for-items:
     runs-on: ubuntu-latest
-    # This permission allows the job to read the repository's contents.
-    permissions:
-      contents: read
+
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
-      issue_title: ${{ steps.check_script.outputs.issue_title }}
-      issue_body: ${{ steps.check_script.outputs.issue_body }}
-      
+      issue_title:  ${{ steps.check_script.outputs.issue_title }}
+      issue_body:   ${{ steps.check_script.outputs.issue_body }}
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          # Explicitly provide the token to ensure access to the private repository.
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
-      
-      - name: Install dependencies
+          python-version: '3.12'     # or any version your code needs
+
+      - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Check Action Items Script
+      - name: Run check_action_items.py
         id: check_script
-        run: python scripts/check_action_items.py
+        run: |
+          python scripts/check_action_items.py
+        # ----------------------------------------------------
+        # Inside scripts/check_action_items.py, write outputs
+        # like this (file‑based syntax):
+        #
+        #   import os
+        #   with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+        #       fh.write("create_issue=true\n")
+        #       fh.write("issue_title=🚨 Urgent item found\n")
+        #       fh.write("issue_body<<EOF\nFull markdown body…\nEOF\n")
+        # ----------------------------------------------------
 
-      # This step saves the multi-line issue body to a file
-      - name: Save issue body to file
-        if: steps.check_script.outputs.create_issue == 'true'
-        run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
-
-      # This step uploads the file as an artifact for the next job
-      - name: Upload issue body artifact
-        if: steps.check_script.outputs.create_issue == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: issue-data
-          path: issue_body.md
-
-  # The second job, named 'create-issue'. Its purpose is to download the artifact and create the issue.
+# ============================================================
+# 2. Create the GitHub Issue (runs only when create_issue=true)
+# ============================================================
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      contents: read # Read permission is needed for the checkout step.
-      
+
     steps:
-      # We need to check out the repo again for the 'gh' command to have context.
+      # gh needs a repo checkout so it can locate .git
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          # Explicitly provide the token here as well.
-          token: ${{ secrets.GITHUB_TOKEN }}
-        
-      # Download the artifact from the previous job
-      - name: Download issue body artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: issue-data
-          
-      - name: Create GitHub Issue
+
+      - name: Create issue with GitHub CLI
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN:    ${{ secrets.GITHUB_TOKEN }}              # auth for gh
           ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
+          ISSUE_BODY:  ${{ needs.check-for-items.outputs.issue_body }}
         run: |
+          # Preserve newlines by writing the body to a file
+          printf '%s\n' "$ISSUE_BODY" > body.md
+
           gh issue create \
-            --title "$ISSUE_TITLE" \
-            --body-file issue_body.md \
-            --label "bug,human-required,agent-reported" \
-            --assignee "sagearbor"
+            --title     "$ISSUE_TITLE" \
+            --body-file body.md \
+            --label     "bug" \
+            --label     "human-required" \
+            --label     "agent-reported" \
+            --assignee  "sagearbor"
+
+          # Optional clean‑up
+          rm -f body.md
