@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     # This job now needs write permissions to commit the log file.
     permissions:
-      contents: write
+      contents: write # CORRECTED: Changed from 'read' to 'write'
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
@@ -43,13 +43,13 @@ jobs:
         run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
 
       - name: Upload issue body artifact
-        if: steps.check_script.outputs.create_issue == 'true'
+        if: steps.check_sctipt.outputs.create_issue == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: issue-data
           path: issue_body.md
 
-      # CRITICAL FIX: This step commits the updated notification log back to the repository.
+      # This step commits the updated notification log back to the repository.
       - name: Commit Notification Log
         if: steps.check_script.outputs.create_issue == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      contents: read # This checkout step only needs read access.
+      contents: read
       
     steps:
       - name: Check out repository
@@ -89,6 +89,8 @@ jobs:
           gh issue create \
             --title "$ISSUE_TITLE" \
             --body-file issue_body.md \
-            --label "bug,human-required,agent-reported" \
+            --label "bug" \
+            --label "human-required" \
+            --label "agent-reported" \
             --assignee "sagearbor" \
             --assignee "Teebs4140"
