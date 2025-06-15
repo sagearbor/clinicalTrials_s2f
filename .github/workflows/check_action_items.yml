@@ -39,20 +39,16 @@ jobs:
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
     permissions:
-      issues: write # IMPORTANT: This permission is required to create issues
+      issues: write
+      contents: read
       
     steps:
       - name: Create GitHub Issue
-        # Using the action that we have confirmed the runner can find.
-        uses: JasonEtco/create-an-issue@v2
-        # This action requires the GITHUB_TOKEN to be passed in the 'env' block.
+        run: |
+          gh issue create \
+            --title "${{ needs.check-for-items.outputs.issue_title }}" \
+            --body "${{ needs.check-for-items.outputs.issue_body }}" \
+            --label "bug,human-required,agent-reported" \
+            --assignee "sagearbor"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # Sets the issue title using the output from the 'check-for-items' job.
-          title: ${{ needs.check-for-items.outputs.issue_title }}
-          # Sets the issue body using the output from the 'check-for-items' job.
-          body: ${{ needs.check-for-items.outputs.issue_body }}
-          # This action requires labels and assignees to be a comma-separated string.
-          labels: bug,human-required,agent-reported
-          assignees: sagearbor
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
