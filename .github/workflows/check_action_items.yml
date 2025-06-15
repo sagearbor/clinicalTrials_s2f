@@ -76,4 +76,4 @@ jobs:
           # Assigns the issue to specific GitHub users, who will be notified.
           assignees: |
             sagearbor
-            another-username # Change as needed
+          # another-username # Change as needed, but indent same level as above line, two more spaces.
