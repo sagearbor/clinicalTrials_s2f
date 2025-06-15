@@ -11,6 +11,9 @@ jobs:
   # The first job, named 'check-for-items'. Its purpose is to run the Python script.
   check-for-items:
     runs-on: ubuntu-latest
+    # This permission allows the job to read the repository's contents.
+    permissions:
+      contents: read
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
@@ -19,6 +22,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # Explicitly provide the token to ensure access to the private repository.
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,38 +38,49 @@ jobs:
         id: check_script
         run: python scripts/check_action_items.py
 
-  # The second job, named 'create-issue'. Its purpose is to create the GitHub Issue.
+      # This step saves the multi-line issue body to a file
+      - name: Save issue body to file
+        if: steps.check_script.outputs.create_issue == 'true'
+        run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
+
+      # This step uploads the file as an artifact for the next job
+      - name: Upload issue body artifact
+        if: steps.check_script.outputs.create_issue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-data
+          path: issue_body.md
+
+  # The second job, named 'create-issue'. Its purpose is to download the artifact and create the issue.
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
     permissions:
-      issues: write # IMPORTANT: This permission is required to create issues
+      issues: write
+      contents: read # Read permission is needed for the checkout step.
       
     steps:
-      # CORRECTED: Added a checkout step to this job so the 'gh' CLI has repository context.
+      # We need to check out the repo again for the 'gh' command to have context.
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Create GitHub Issue via CLI
-        env:
-          # The GITHUB_TOKEN is required for authentication.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Pass the outputs from the previous job as environment variables.
-          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
-          ISSUE_BODY: ${{ needs.check-for-items.outputs.issue_body }}
-        run: |
-          # This is a robust way to handle multi-line strings in shell scripts.
-          # It writes the body to a temporary file first.
-          echo "$ISSUE_BODY" > issue_body.md
+        with:
+          # Explicitly provide the token here as well.
+          token: ${{ secrets.GITHUB_TOKEN }}
+        
+      # Download the artifact from the previous job
+      - name: Download issue body artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-data
           
-          # The 'gh issue create' command reads the title from the environment variable
-          # and the body from the file we just created. Using --label multiple times is
-          # the most reliable way to add several labels.
+      - name: Create GitHub Issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
+        run: |
           gh issue create \
             --title "$ISSUE_TITLE" \
             --body-file issue_body.md \
-            --label "bug" \
-            --label "human-required" \
-            --label "agent-reported" \
+            --label "bug,human-required,agent-reported" \
             --assignee "sagearbor"
