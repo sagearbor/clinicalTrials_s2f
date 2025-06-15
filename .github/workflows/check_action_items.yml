@@ -40,13 +40,16 @@ jobs:
       
     steps:
       - name: Create GitHub Issue
-        uses: peter-evans/create-issue-from-file@v5
+        # Switched to the correct action that accepts direct text content
+        uses: peter-evans/create-issue@v5
         with:
           title: ${{ needs.check-for-items.outputs.issue_title }}
-          content: ${{ needs.check-for-items.outputs.issue_body }}
+          # Use the 'body' input instead of the invalid 'content'
+          body: ${{ needs.check-for-items.outputs.issue_body }}
           labels: |
             bug
             human-required
             agent-reported
-          # Add the GitHub usernames of the people you want to notify, separated by commas.
-          assignees: sagearbor #,dthibault # Assumes 'dthibault' is the username for Dylan.
+          assignees: |
+            sagearbor
+            another-username # Change as needed
