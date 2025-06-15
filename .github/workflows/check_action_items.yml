@@ -1,4 +1,4 @@
-# This GitHub Action checks for new action items and creates a GitHub Issue to notify developers.
+# This GitHub Action uses artifacts to pass data between jobs for robust issue creation.
 
 name: Check for Action Items
 
@@ -8,16 +8,23 @@ on:
     - cron: '0 * * * *'
 
 jobs:
-  # The first job, named 'check-for-items'. Its purpose is to run the Python script.
+  # The first job, named 'check-for-items'. Its purpose is to run the Python script,
+  # pass outputs, and commit the updated notification log.
   check-for-items:
     runs-on: ubuntu-latest
+    # This job now needs write permissions to commit the log file.
+    permissions:
+      contents: write
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
       issue_title: ${{ steps.check_script.outputs.issue_title }}
+      issue_body: ${{ steps.check_script.outputs.issue_body }}
       
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,55 +38,57 @@ jobs:
         id: check_script
         run: python scripts/check_action_items.py
 
-      # Save issue body to file to handle special characters and multiline content
       - name: Save issue body to file
         if: steps.check_script.outputs.create_issue == 'true'
-        run: |
-          cat << 'EOF' > issue_body.md
-          ${{ steps.check_script.outputs.issue_body }}
-          EOF
+        run: echo "${{ steps.check_script.outputs.issue_body }}" > issue_body.md
 
-      # Upload the file as an artifact for the next job
-      - name: Upload issue data
+      - name: Upload issue body artifact
         if: steps.check_script.outputs.create_issue == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: issue-data
           path: issue_body.md
 
-  # The second job, named 'create-issue'. Its purpose is to create the GitHub Issue.
+      # CRITICAL FIX: This step commits the updated notification log back to the repository.
+      - name: Commit Notification Log
+        if: steps.check_script.outputs.create_issue == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(logs): Update action item notification log"
+          # Only commit the specific log file to avoid accidental commits.
+          file_pattern: ACTION_ITEMS/notification_log.json
+          commit_user_name: "GitHub Actions Bot"
+          commit_user_email: "actions@github.com"
+          commit_author: "GitHub Actions Bot <actions@github.com>"
+
+  # The second job, named 'create-issue'. Its purpose is to download the artifact and create the issue.
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
-      contents: read
+      contents: read # This checkout step only needs read access.
       
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
         
-      - name: Download issue data
+      - name: Download issue body artifact
         uses: actions/download-artifact@v4
         with:
           name: issue-data
-
-      # Create labels if they don't exist
-      - name: Create labels if needed
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Create labels (ignore if they already exist)
-          gh label create "human-required" --description "Requires human intervention" --color "d73a4a" || true
-          gh label create "agent-reported" --description "Reported by automated agent" --color "0052cc" || true
           
       - name: Create GitHub Issue
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
         run: |
           gh issue create \
-            --title "${{ needs.check-for-items.outputs.issue_title }}" \
+            --title "$ISSUE_TITLE" \
             --body-file issue_body.md \
             --label "bug,human-required,agent-reported" \
-            --assignee "sagearbor"
+            --assignee "sagearbor" \
+            --assignee "Teebs4140"
