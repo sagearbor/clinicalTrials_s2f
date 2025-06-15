@@ -1,30 +1,20 @@
-# ------------------------------------------------------------
-#  Check for Action Items and (if needed) open a GitHub Issue
-# ------------------------------------------------------------
+# This GitHub Action checks for new action items and creates a GitHub Issue to notify developers.
+
 name: Check for Action Items
 
 on:
-  workflow_dispatch:          # manual trigger
+  workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'       # every hour
-
-# All jobs inherit these permissions
-permissions:
-  contents: read
-  issues:   write
+    - cron: '0 * * * *'
 
 jobs:
-# ============================================================
-# 1. Run your Python script to decide whether to open an issue
-# ============================================================
+  # The first job, named 'check-for-items'. Its purpose is to run the Python script.
   check-for-items:
     runs-on: ubuntu-latest
-
     outputs:
       create_issue: ${{ steps.check_script.outputs.create_issue }}
-      issue_title:  ${{ steps.check_script.outputs.issue_title }}
-      issue_body:   ${{ steps.check_script.outputs.issue_body }}
-
+      issue_title: ${{ steps.check_script.outputs.issue_title }}
+      
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -32,55 +22,55 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'     # or any version your code needs
-
-      - name: Install Python dependencies
+          python-version: '3.9'
+      
+      - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run check_action_items.py
+      - name: Run Check Action Items Script
         id: check_script
-        run: |
-          python scripts/check_action_items.py
-        # ----------------------------------------------------
-        # Inside scripts/check_action_items.py, write outputs
-        # like this (file‑based syntax):
-        #
-        #   import os
-        #   with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-        #       fh.write("create_issue=true\n")
-        #       fh.write("issue_title=🚨 Urgent item found\n")
-        #       fh.write("issue_body<<EOF\nFull markdown body…\nEOF\n")
-        # ----------------------------------------------------
+        run: python scripts/check_action_items.py
 
-# ============================================================
-# 2. Create the GitHub Issue (runs only when create_issue=true)
-# ============================================================
+      # Save issue body to file to handle special characters and multiline content
+      - name: Save issue body to file
+        if: steps.check_script.outputs.create_issue == 'true'
+        run: |
+          cat << 'EOF' > issue_body.md
+          ${{ steps.check_script.outputs.issue_body }}
+          EOF
+
+      # Upload the file as an artifact for the next job
+      - name: Upload issue data
+        if: steps.check_script.outputs.create_issue == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-data
+          path: issue_body.md
+
+  # The second job, named 'create-issue'. Its purpose is to create the GitHub Issue.
   create-issue:
     needs: check-for-items
     if: needs.check-for-items.outputs.create_issue == 'true'
     runs-on: ubuntu-latest
-
+    permissions:
+      issues: write
+      contents: read
+      
     steps:
-      # gh needs a repo checkout so it can locate .git
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Create issue with GitHub CLI
+        
+      - name: Download issue data
+        uses: actions/download-artifact@v4
+        with:
+          name: issue-data
+          
+      - name: Create GitHub Issue
         env:
-          GH_TOKEN:    ${{ secrets.GITHUB_TOKEN }}              # auth for gh
-          ISSUE_TITLE: ${{ needs.check-for-items.outputs.issue_title }}
-          ISSUE_BODY:  ${{ needs.check-for-items.outputs.issue_body }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Preserve newlines by writing the body to a file
-          printf '%s\n' "$ISSUE_BODY" > body.md
-
           gh issue create \
-            --title     "$ISSUE_TITLE" \
-            --body-file body.md \
-            --label     "bug" \
-            --label     "human-required" \
-            --label     "agent-reported" \
-            --assignee  "sagearbor"
-
-          # Optional clean‑up
-          rm -f body.md
+            --title "${{ needs.check-for-items.outputs.issue_title }}" \
+            --body-file issue_body.md \
+            --label "bug,human-required,agent-reported" \
+            --assignee "sagearbor"
