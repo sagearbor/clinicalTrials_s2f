@@ -39,7 +39,7 @@
 
 - agentId: 2.200
   name: Patient Recruitment Material Generator
-  status: 0
+  status: 100
   dependencies: [1.200]
   critical_path: false
 
