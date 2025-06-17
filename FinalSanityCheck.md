@@ -79,3 +79,21 @@ Use this checklist to ensure all repository components are correctly configured 
 [ ] .gitignore: Does it correctly ignore .env files and __pycache__?
 
 [ ] PROGRESS.md & NEXT_ACTIONS.md: Are they present as placeholder files, explaining that they are auto-generated?
+
+
+-----------
+
+To get a new LLM up to speed on the project's architecture and your next goal, you need to provide a mix of high-level design documents and key implementation details.
+
+### Prioritized File List for New LLM Context (to focus on first AGENT implementations)
+
+1.  `README.md`
+2.  `AGENTS.md` (Root)
+3.  `config/checklist.yml`
+4.  `scripts/utils.py`
+5.  `scripts/protocol_synopsis_agent.py`
+6.  `scripts/site_performance_agent.py`
+7.  `config/agents.md`
+8.  `scripts/propose_next_tasks.py`
+9.  `.github/workflows/check_action_items.yml`
+10. `requirements.txt`
