@@ -1,10 +1,15 @@
-# Core Framework Dependencies
-python-dotenv>=1.0.0  # For loading environment variables from .env file
+# ==============================================================================
+# CORE FRAMEWORK DEPENDENCIES
+# ==============================================================================
+python-dotenv>=1.0.0  # For loading environment variables from the .env file
 PyYAML>=6.0         # For robustly parsing the config/checklist.yml file
+python-frontmatter>=1.0.0 # For parsing metadata from /ACTION_ITEMS markdown files
 
-# LLM & AI Dependencies
-litellm>=1.30.0     # Excellent library for calling 100+ LLM providers using a unified interface. Implements our factory function automatically.
-openai              # Required by LiteLLM for OpenAI/Azure providers.
+# ==============================================================================
+# LLM & AI DEPENDENCIES
+# ==============================================================================
+litellm>=1.30.0     # A unified interface for calling over 100 LLM providers
+openai              # Required by LiteLLM for interacting with OpenAI and Azure OpenAI services
 
 # Agent-Specific Tooling
 # Add libraries here as needed by specific agents.
@@ -12,11 +17,15 @@ python-docx         # For Agent 1.100 to create .docx files.
 requests            # General purpose HTTP requests, useful for API-based agents.
 pillow              # For image generation in Agent 2.200
 
-# Testing Dependencies
-pytest>=7.0.0       # The testing framework for running tests.
-pytest-mock>=3.0.0  # Fixture for easy mocking of functions and objects.
+# ==============================================================================
+# TESTING DEPENDENCIES
+# ==============================================================================
+pytest>=7.0.0       # The framework for writing and running all unit tests
+pytest-mock>=3.0.0  # A pytest fixture for easy mocking of functions and objects
 
-# Optional Web Framework (if you build a UI)
+# ==============================================================================
+# OPTIONAL WEB FRAMEWORK (if you build a UI)
+# ==============================================================================
 # fastapi
 # uvicorn[standard]
 # streamlit

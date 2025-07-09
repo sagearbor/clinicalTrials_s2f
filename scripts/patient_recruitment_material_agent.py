@@ -86,7 +86,6 @@ def generate_materials(protocol_path: str, insights_path: str, output_dir: str) 
     logger.info(f"Materials saved to {output_dir}")
     return {"docx": docx_path, "html": html_path, "png": png_path}
 
-
 def update_checklist(checklist_path: str, status: int) -> None:
     """Update the checklist.yml file for this agent."""
     with open(checklist_path, "r") as f:

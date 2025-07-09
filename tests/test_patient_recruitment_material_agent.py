@@ -21,7 +21,6 @@ class MockLLMResponse:
     def __init__(self, content=""):
         self.choices = [MockLLMChoice(content)]
 
-
 def create_docx(path: Path, text: str) -> None:
     doc = Document()
     doc.add_paragraph(text)
@@ -46,7 +45,6 @@ def test_generate_materials_creates_files(tmp_path, mocker):
 
     doc = Document(paths["docx"])
     assert "Ad copy" in doc.paragraphs[1].text
-
 
 def test_update_checklist(tmp_path):
     checklist_data = [
