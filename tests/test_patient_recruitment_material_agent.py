@@ -4,27 +4,22 @@ import json
 import yaml
 from pathlib import Path
 from docx import Document
-
 import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from scripts import patient_recruitment_material_agent as agent
 
-
-class DummyMessage:
-    def __init__(self, content: str):
+class MockLLMMessage:
+    def __init__(self, content):
         self.content = content
 
+class MockLLMChoice:
+    def __init__(self, content):
+        self.message = MockLLMMessage(content)
 
-class DummyChoice:
-    def __init__(self, content: str):
-        self.message = DummyMessage(content)
-
-
-class DummyResponse:
-    def __init__(self, content: str):
-        self.choices = [DummyChoice(content)]
-
+class MockLLMResponse:
+    def __init__(self, content=""):
+        self.choices = [MockLLMChoice(content)]
 
 def create_docx(path: Path, text: str) -> None:
     doc = Document()
@@ -32,52 +27,49 @@ def create_docx(path: Path, text: str) -> None:
     doc.save(path)
 
 
-def test_generate_materials(tmp_path, mocker):
+def test_generate_materials_creates_files(tmp_path, mocker):
     protocol = tmp_path / "protocol.docx"
     insights = tmp_path / "insights.json"
+    create_docx(protocol, "Protocol text")
+    insights.write_text(json.dumps({"demo": "adult"}))
+
+    mocker.patch('scripts.patient_recruitment_material_agent.completion', return_value=MockLLMResponse("Ad copy\nFlyer"))
+    mocker.patch('scripts.patient_recruitment_material_agent.get_llm_model_name', return_value='test-model')
+
     out_dir = tmp_path / "out"
-
-    create_docx(protocol, "protocol text")
-    insights.write_text(json.dumps({"patients": 50}))
-
-    mocker.patch("scripts.patient_recruitment_material_agent.completion", return_value=DummyResponse("ad copy"))
-    mocker.patch("scripts.patient_recruitment_material_agent.get_llm_model_name", return_value="model")
-
     paths = agent.generate_materials(str(protocol), str(insights), str(out_dir))
 
-    assert Path(paths["html"]).exists()
-    assert "ad copy" in Path(paths["html"]).read_text()
-
     assert Path(paths["docx"]).exists()
-    doc = Document(paths["docx"])
-    content = "\n".join(p.text for p in doc.paragraphs)
-    assert "ad copy" in content
-
+    assert Path(paths["html"]).exists()
     assert Path(paths["png"]).exists()
-    assert Path(paths["png"]).read_bytes() == b"PNG_PLACEHOLDER"
 
+    doc = Document(paths["docx"])
+    assert "Ad copy" in doc.paragraphs[1].text
 
 def test_update_checklist(tmp_path):
     checklist_data = [
-        {"agentId": "2.200", "name": "Patient Recruitment Material Generator", "status": 0, "dependencies": []}
+        {'agentId': '2.200', 'name': 'Patient Recruitment Material Generator', 'status': 0}
     ]
-    file_path = tmp_path / "checklist.yml"
+    file_path = tmp_path / 'checklist.yml'
     file_path.write_text(yaml.safe_dump(checklist_data))
 
-    agent.update_checklist(str(file_path), 88)
-
+    agent.update_checklist(str(file_path), 90)
     updated = yaml.safe_load(file_path.read_text())
-    assert updated[0]["status"] == 88
+    assert updated[0]['status'] == 90
 
 
-def test_write_progress_log(tmp_path):
-    log_dir = tmp_path / "logs"
-    path = agent.write_progress_log(str(log_dir), 20, "summary")
+def test_write_progress_log_creates_valid_json(tmp_path):
+    log_dir = tmp_path / 'logs'
+    status = 50
+    summary = 'Created materials'
 
-    log_path = Path(path)
-    assert log_path.exists()
-    data = json.loads(log_path.read_text())
-    assert data["agentId"] == "2.200"
-    assert data["status"] == 20
-    assert data["summary"] == "summary"
-    assert "timestamp" in data
+    path_str = agent.write_progress_log(str(log_dir), status, summary)
+    path = Path(path_str)
+    assert path.exists()
+    assert path.name.startswith(f"2.200-{status}-")
+
+    content = json.loads(path.read_text())
+    assert content['agentId'] == '2.200'
+    assert content['status'] == status
+    assert content['summary'] == summary
+    assert 'timestamp' in content

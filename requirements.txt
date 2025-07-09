@@ -11,12 +11,11 @@ python-frontmatter>=1.0.0 # For parsing metadata from /ACTION_ITEMS markdown fil
 litellm>=1.30.0     # A unified interface for calling over 100 LLM providers
 openai              # Required by LiteLLM for interacting with OpenAI and Azure OpenAI services
 
-# ==============================================================================
-# AGENT-SPECIFIC TOOLING
-# (Add libraries here as needed by specific agents)
-# ==============================================================================
-python-docx         # For creating and manipulating .docx files (e.g., Agent 1.100)
-requests            # For making general-purpose HTTP requests to external APIs
+# Agent-Specific Tooling
+# Add libraries here as needed by specific agents.
+python-docx         # For Agent 1.100 to create .docx files.
+requests            # General purpose HTTP requests, useful for API-based agents.
+pillow              # For image generation in Agent 2.200
 
 # ==============================================================================
 # TESTING DEPENDENCIES
