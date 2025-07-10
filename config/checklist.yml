@@ -87,6 +87,6 @@
 
 - agentId: 4.300
   name: Clinical Study Report (CSR) Generation Agent
-  status: 0
+  status: 100
   dependencies: [4.100, 4.200]
   critical_path: true
