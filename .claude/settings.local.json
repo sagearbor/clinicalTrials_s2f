@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(pytest:*)",
+      "Bash(PYTHONPATH=/mnt/c/Users/scb2/AppData/Local/GitHubDesktop/app-3.4.20/clinicalTrials_s2f pytest tests/test_realtime_data_validation_agent.py -v)"
+    ],
+    "deny": []
+  }
+}
