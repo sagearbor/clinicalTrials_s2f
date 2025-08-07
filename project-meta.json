@@ -1,13 +1,12 @@
 {
   "name": "Agentic AI for Clinical Trial Automation",
-  "description": "This project accelerates clinical trials using modular AI agents. It automates tasks to enhance efficiency and reduce errors.",
+  "description": "This project automates and improves clinical trial efficiency.",
   "technologies": [
     "Python",
     "GitHub Actions",
     "JSON"
   ],
   "category": [
-    "api",
     "automation",
     "ml-ai"
   ],
