@@ -1,1 +1,25 @@
-{"name":"Agentic AI for Clinical Trial Automation","description":"This software automates clinical trial processes, enhancing efficiency and reducing errors. It features AI agents for task handling.","technologies":["Python","GitHub Actions","JSON","YAML"],"category":["automation","ml-ai","web-app"],"status":"active","language":["Python"],"hosted_url":null}
+{
+  "name": "Agentic AI for Clinical Trial Automation",
+  "description": "This project accelerates clinical trials using modular AI agents. It automates tasks to enhance efficiency and reduce errors.",
+  "technologies": [
+    "Python",
+    "GitHub Actions",
+    "JSON"
+  ],
+  "category": [
+    "api",
+    "automation",
+    "ml-ai"
+  ],
+  "status": "active",
+  "language": [
+    "Python"
+  ],
+  "hosted_url": null,
+  "activity": {
+    "commits_30d": 1,
+    "last_commit": "2025-08-07",
+    "contributors": 0,
+    "hotness_score": 32
+  }
+}
